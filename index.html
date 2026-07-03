@@ -896,14 +896,23 @@
 
         var data = await resp.json();
 
+        // If the API returned an error object at the top level, surface it
+        if (data.error) {
+          var errMsg = data.error.message || JSON.stringify(data.error);
+          throw new Error('API 错误：' + errMsg);
+        }
+
         // Collect text from all content blocks
         var allText = '';
         (data.content || []).forEach(function(block) {
-          if (block.type === 'text')    { allText += block.text; }
+          if (block.type === 'text')     { allText += block.text; }
           if (block.type === 'thinking') { allText += block.thinking || ''; }
         });
         if (!allText) {
-          throw new Error('AI 未返回文本内容，请重试');
+          // Show what we DID receive to help debugging
+          var blockTypes = (data.content || []).map(function(b) { return b.type; }).join(', ');
+          console.error('No text in response. Content block types:', blockTypes, '| Full response keys:', Object.keys(data));
+          throw new Error('AI 未返回文本内容（收到类型: ' + (blockTypes || '空') + '），请重试');
         }
 
         console.log('Claude raw response text:', allText);

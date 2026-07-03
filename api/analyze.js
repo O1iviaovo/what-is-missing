@@ -2,27 +2,27 @@
  * Vercel serverless function — Anthropic API proxy
  *
  * POST /api/analyze  →  forwards raw request/response to Anthropic Messages API.
- * Minimal transform: reads the incoming body faithfully, forwards it,
- * and streams the upstream response back byte-for-byte to avoid any
- * parse → re-serialise difference.
+ * Disables the built-in body parser so we can handle the body ourselves
+ * (important for large base64-image payloads).
  */
 
-// Vercel automatically parses JSON bodies — but the request may be large
-// (base64 images).  We disable the built-in parser so we can read the
-// raw body and forward it unmodified.
 export const config = {
   api: {
-    bodyParser: false       // we handle the body ourselves
+    bodyParser: false
   }
 };
 
-/** Helper: read the entire incoming request body as a UTF-8 string */
-async function readRawBody(req) {
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks).toString('utf-8');
+/** Read the entire incoming request body as a UTF-8 string */
+function readRawBody(req) {
+  return new Promise((resolve, reject) => {
+    var chunks = [];
+    req.on('data', function (chunk) { chunks.push(chunk); });
+    req.on('end', function () {
+      var buf = Buffer.concat(chunks);
+      resolve(buf.toString('utf-8'));
+    });
+    req.on('error', reject);
+  });
 }
 
 export default async function handler(req, res) {
@@ -35,32 +35,44 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed — use POST' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // --- Validate API key ---
-  const apiKey = req.headers['x-api-key'];
+  var apiKey = req.headers['x-api-key'];
   if (!apiKey) {
     return res.status(400).json({ error: 'Missing X-Api-Key header' });
   }
 
   // --- Forward to Anthropic ---
   try {
-    // Read the raw request body ourselves (bodyParser is off)
-    const rawBody = await readRawBody(req);
+    var rawBody = await readRawBody(req);
+    console.log('[analyze] body length:', rawBody.length, 'chars');
 
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    var upstream = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Content-Type':   'application/json',
-        'x-api-key':       apiKey,
-        'anthropic-version': '2023-06-01'
+        'Content-Type':       'application/json',
+        'x-api-key':           apiKey,
+        'anthropic-version':   '2023-06-01'
       },
       body: rawBody
     });
 
-    // Stream the upstream response back byte-for-byte
-    const upstreamText = await upstream.text();
+    var upstreamText = await upstream.text();
+    console.log('[analyze] upstream status:', upstream.status, '| response length:', upstreamText.length);
+
+    // Log the content types in the response for debugging
+    try {
+      var parsed = JSON.parse(upstreamText);
+      if (parsed.content) {
+        console.log('[analyze] content block types:',
+          parsed.content.map(function (b) { return b.type; }).join(', '));
+      }
+      if (parsed.error) {
+        console.log('[analyze] upstream error:', JSON.stringify(parsed.error));
+      }
+    } catch (_) { /* not JSON — just forward as-is */ }
 
     res.status(upstream.status)
        .setHeader('Content-Type', 'application/json; charset=utf-8')
