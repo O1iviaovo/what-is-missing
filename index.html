@@ -877,10 +877,9 @@
 
         var body = {
           model: MODEL,
-          max_tokens: 2048,  // two-image analysis needs more headroom
+          max_tokens: 4096,
           system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: userContent }],
-          thinking: { type: 'disabled' }   // Sonnet 5 may enable thinking by default
+          messages: [{ role: 'user', content: userContent }]
         };
 
         var resp = await fetch(CLAUDE_API_URL, {
@@ -942,13 +941,33 @@
           }
         }
 
-        try {
-          var result = JSON.parse(jsonStr);
-          return result;
-        } catch (parseErr) {
-          console.error('JSON parse failed. Attempted to parse:', jsonStr.slice(0, 500));
-          throw new Error('AI 返回了非 JSON 格式，请重试（返回片段: ' + jsonStr.slice(0, 120) + '…）');
+        // 3) Repair common AI JSON mistakes before parsing
+        function repairJSON(str) {
+          // Replace smart/Chinese quotes INSIDE string values with guillemets
+          // (smart quotes look like regular " to humans but break JSON)
+          var fixed = str;
+          // Chinese left/right double quotes → angle quotes (JSON-safe)
+          fixed = fixed.replace(/“/g, '«');  // " → «
+          fixed = fixed.replace(/”/g, '»');  // " → »
+          return fixed;
         }
+
+        var result;
+        try {
+          result = JSON.parse(jsonStr);
+        } catch (parseErr) {
+          // First repair attempt
+          var repaired = repairJSON(jsonStr);
+          try {
+            result = JSON.parse(repaired);
+            console.log('JSON repaired successfully');
+          } catch (repairErr) {
+            console.error('JSON parse failed. Original:', jsonStr.slice(0, 500));
+            console.error('JSON parse failed. Repaired:', repaired.slice(0, 500));
+            throw new Error('AI 返回了非 JSON 格式，请重试（返回片段: ' + jsonStr.slice(0, 120) + '…）');
+          }
+        }
+        return result;
       }
 
       function renderSuggestions(data, hasReference) {
