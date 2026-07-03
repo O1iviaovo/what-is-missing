@@ -844,8 +844,20 @@
         var hasReference = referenceImages && referenceImages.length > 0;
         var userContent = [];
 
-        // Add reference images first (if any)
+        // ①  User's own outfit photo FIRST — clearly labelled
+        userContent.push({ type: 'text', text: '【我的今日穿搭照片】' });
+        userContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: extractMediaType(dataUrl),
+            data: extractBase64(dataUrl)
+          }
+        });
+
+        // ②  Reference / inspiration images SECOND — clearly labelled
         if (hasReference) {
+          userContent.push({ type: 'text', text: '【我想参考的穿搭风格图片】' });
           for (var i = 0; i < referenceImages.length; i++) {
             userContent.push({
               type: 'image',
@@ -858,17 +870,7 @@
           }
         }
 
-        // Add user's outfit photo
-        userContent.push({
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: extractMediaType(dataUrl),
-            data: extractBase64(dataUrl)
-          }
-        });
-
-        // Add text prompt
+        // ③  Final instruction
         userContent.push({ type: 'text', text: buildUserPrompt(hasReference) });
 
         var body = {
