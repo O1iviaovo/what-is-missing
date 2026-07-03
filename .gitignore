@@ -1,0 +1,14 @@
+# Large video files (not used in current version)
+plant*.mp4
+*.mp4
+
+# Dev files
+server.ps1
+start.bat
+server-errors.log
+
+# Docs
+what is missing.docx
+
+# Vercel
+.vercel

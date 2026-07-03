@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What is Missing?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@400;500;600&family=Dancing+Script:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-peach:      #F9E3DD;
+      --card-cream:    #FFFCFA;
+      --rose:          #D4929A;
+      --sage:          #8FA87C;
+      --terracotta:    #D4876E;
+      --ink:           #3D2C28;
+      --ink-soft:      #6B5650;
+      --ink-muted:     #9B8A84;
+      --radius-sm:  8px;
+      --radius-md:  14px;
+      --radius-lg:  20px;
+      --radius-xl:  28px;
+      --radius-cap: 999px;
+      --shadow-card:  0 2px 20px rgba(61,44,40,0.05);
+      --shadow-hover: 0 6px 28px rgba(61,44,40,0.09);
+      --ease-smooth: cubic-bezier(0.4,0,0.2,1);
+      --ease-out:   cubic-bezier(0.22,0.61,0.36,1);
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: "Noto Serif SC","PingFang SC","Microsoft YaHei",Georgia,serif;
+      background-color: var(--bg-peach);
+      background-image: url('f21415483e233a4861a789fae6561419.jpg');
+      background-repeat: repeat;
+      background-size: 360px;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex; justify-content: center;
+      padding: 0 24px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Pink overlay — makes the tiled background pattern subtle & soft */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(249, 227, 221, 0.78);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== Intro Animation — Petal Falling + Floating Card ===== */
+    .intro-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: var(--bg-peach);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+      overflow: hidden;
+    }
+    .intro-overlay.fadeout {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+    .intro-overlay.skip { display: none; }
+
+    /* --- Petals container — full-screen, pointer-transparent --- */
+    .petals-container {
+      position: absolute; inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* --- Single petal --- */
+    .petal {
+      position: absolute;
+      top: -40px;
+      display: block;
+      /* Petal shape: narrow at top, wider at bottom */
+      width: 14px;
+      height: 22px;
+      border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
+      background: var(--color, #E8A0B4);
+      opacity: 0;
+      /* Scale is set via --scale */
+      transform: scale(var(--scale, 1));
+      /* Assign one of three sway animations */
+      animation-name: var(--sway-name, petalFall1);
+      animation-duration: var(--duration, 5s);
+      animation-delay: var(--delay, 0s);
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      /* Let the petal start invisible and fade in via keyframes */
+    }
+
+    /* ===== Three falling paths with different sway patterns ===== */
+    @keyframes petalFall1 {
+      0%   { transform: translateY(-5vh) translateX(0)   rotate(0deg)   scale(var(--scale)); opacity: 0; }
+      3%   { opacity: 0.65; }
+      25%  { transform: translateY(25vh) translateX(30px) rotate(95deg)  scale(var(--scale)); }
+      50%  { transform: translateY(50vh) translateX(-18px) rotate(190deg) scale(var(--scale)); }
+      75%  { transform: translateY(75vh) translateX(22px) rotate(285deg) scale(var(--scale)); opacity: 0.5; }
+      100% { transform: translateY(108vh) translateX(-8px) rotate(380deg) scale(var(--scale)); opacity: 0; }
+    }
+
+    @keyframes petalFall2 {
+      0%   { transform: translateY(-5vh) translateX(0)    rotate(15deg)  scale(var(--scale)); opacity: 0; }
+      3%   { opacity: 0.6; }
+      30%  { transform: translateY(30vh) translateX(-35px) rotate(120deg) scale(var(--scale)); }
+      55%  { transform: translateY(55vh) translateX(12px)  rotate(215deg) scale(var(--scale)); }
+      80%  { transform: translateY(80vh) translateX(-28px) rotate(310deg) scale(var(--scale)); opacity: 0.45; }
+      100% { transform: translateY(108vh) translateX(18px)  rotate(410deg) scale(var(--scale)); opacity: 0; }
+    }
+
+    @keyframes petalFall3 {
+      0%   { transform: translateY(-5vh) translateX(0)    rotate(-25deg) scale(var(--scale)); opacity: 0; }
+      3%   { opacity: 0.7; }
+      35%  { transform: translateY(35vh) translateX(40px)  rotate(75deg)  scale(var(--scale)); }
+      60%  { transform: translateY(60vh) translateX(-40px) rotate(175deg) scale(var(--scale)); }
+      85%  { transform: translateY(85vh) translateX(25px)  rotate(275deg) scale(var(--scale)); opacity: 0.5; }
+      100% { transform: translateY(108vh) translateX(-22px) rotate(370deg) scale(var(--scale)); opacity: 0; }
+    }
+
+    /* --- Outer card — frosted glass, near-rectangular border --- */
+    .intro-card {
+      position: relative; z-index: 2;
+      background: rgba(255,252,248,0.85);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid #C9A89A;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(61,44,40,0.06), 0 2px 8px rgba(61,44,40,0.03);
+      padding: 12px 14px;        /* thin gap between outer ↔ inner border */
+      text-align: center;
+      opacity: 0;
+      animation: introCardAppear 0.8s ease forwards;
+      animation-delay: 1s;        /* petals fall first, card follows */
+    }
+    @keyframes introCardAppear {
+      0%   { opacity: 0; transform: translateY(16px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* --- Inner border — nested slim frame --- */
+    .intro-card__inner {
+      border: 1px solid #C9A89A;
+      border-radius: 4px;
+      padding: 24px 28px;
+    }
+
+    /* --- Title --- */
+    .intro-title {
+      font-family: "Cormorant Garamond","Noto Serif SC",Georgia,serif;
+      font-size: 2.6rem; font-weight: 500; font-style: italic;
+      color: var(--ink); letter-spacing: 0.10em; line-height: 1.15;
+    }
+
+    /* --- Divider: line — flower — line --- */
+    .intro-divider {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin: 18px auto 22px;
+      color: #C9A89A;
+    }
+    .intro-divider__line {
+      flex: 0 0 42px;
+      height: 1px;
+      background: #C9A89A;
+    }
+    .intro-divider__flower {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .intro-card         { padding: 10px 12px; }
+      .intro-card__inner  { padding: 18px 20px; }
+      .intro-title        { font-size: 2.0rem; }
+      .intro-divider__line { flex-basis: 28px; }
+    }
+    .intro-enter {
+      display: inline-block;
+      font-family: "Noto Serif SC","PingFang SC","Microsoft YaHei",Georgia,serif;
+      font-size: 0.88rem; font-weight: 500;
+      color: var(--ink-soft); letter-spacing: 0.18em;
+      background: none; border: 1px solid #C9A89A;
+      padding: 10px 36px; border-radius: var(--radius-cap);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+    .intro-enter:hover {
+      background: var(--ink); color: #FEFAF7; border-color: var(--ink);
+    }
+
+    /* ===== Page Container ===== */
+    .page {
+      position: relative; z-index: 2; isolation: isolate;
+      width: 100%; max-width: 640px;
+      padding: 44px 0 60px;
+      display: flex; flex-direction: column; align-items: center; gap: 30px;
+    }
+
+    /* ===== Header ===== */
+    .header { text-align: center; padding-top: 8px; }
+    .header__title {
+      font-family: "Cormorant Garamond","Noto Serif SC",Georgia,serif;
+      font-size: 2.7rem; font-weight: 500; font-style: italic;
+      color: var(--ink); letter-spacing: 0.10em; line-height: 1.15;
+    }
+    .header__handwritten {
+      display: block;
+      font-family: "Dancing Script","KaiTi",cursive;
+      font-size: 1.25rem; font-weight: 500; font-style: normal;
+      color: var(--terracotta); letter-spacing: 0.03em; margin-top: 2px;
+    }
+    .header__slogan {
+      margin-top: 10px; font-size: 0.92rem; color: var(--ink-soft);
+      letter-spacing: 0.06em;
+    }
+
+    /* ===== Upload Zone ===== */
+    .upload-wrapper { position: relative; width: 100%; }
+    .upload-zone {
+      position: relative; z-index: 1;
+      width: 100%; min-height: 260px;
+      border: 2px dashed #C8B8B4;
+      border-radius: var(--radius-xl);
+      background: var(--card-cream);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; overflow: hidden;
+      transition: border-color 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth);
+      box-shadow: var(--shadow-card);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--terracotta); background: #FFF7F4; box-shadow: var(--shadow-hover);
+    }
+    .upload-zone.drag-over { border-style: solid; border-width: 2.5px; }
+    .upload-zone.has-image { border-style: solid; border-color: #E8BBC1; min-height: auto; padding: 10px; }
+
+    .upload-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 48px 24px; text-align: center;
+      transition: opacity 0.25s var(--ease-smooth);
+    }
+    .upload-zone.has-image .upload-placeholder { display: none; }
+
+    .upload-icon-circle {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #F8E2E6;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .upload-icon-circle svg { width: 26px; height: 26px; color: var(--terracotta); }
+    .upload-label { font-size: 1.05rem; font-weight: 500; color: var(--ink); letter-spacing: 0.04em; }
+    .upload-hint  { font-size: 0.84rem; color: var(--ink-muted); }
+
+    .upload-preview { display: none; width: 100%; position: relative; }
+    .upload-zone.has-image .upload-preview { display: block; }
+    .upload-preview img {
+      width: 100%; max-height: 400px; object-fit: contain;
+      border-radius: var(--radius-md); display: block;
+    }
+    .upload-remove {
+      position: absolute; top: 10px; right: 10px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(61,44,40,0.72); color: #fff; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; line-height: 1;
+      transition: background 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth);
+    }
+    .upload-remove:hover { background: rgba(61,44,40,0.90); transform: scale(1.12); }
+
+    /* ===== Suggest Button ===== */
+    .btn-suggest {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: var(--terracotta); color: #FEFAF7;
+      font-size: 1rem; font-weight: 500;
+      padding: 14px 40px; border: none; border-radius: var(--radius-cap);
+      cursor: pointer; letter-spacing: 0.05em;
+      transition: background 0.25s var(--ease-smooth), transform 0.2s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth);
+      box-shadow: 0 3px 14px rgba(212,135,110,0.35);
+    }
+    .btn-suggest:hover { background: #C5755F; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212,135,110,0.45); }
+    .btn-suggest:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(212,135,110,0.30); }
+    .btn-suggest:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: 0 2px 8px rgba(212,135,110,0.20); }
+
+    /* Loading spinner inside button */
+    .btn-spinner {
+      display: none; width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn-suggest.is-loading .btn-spinner { display: inline-block; }
+    .btn-suggest.is-loading .btn-star-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== API Key Settings ===== */
+    .api-key-trigger {
+      font-size: 0.78rem; color: var(--ink-muted); cursor: pointer;
+      background: none; border: none; text-decoration: underline;
+      text-underline-offset: 3px; letter-spacing: 0.03em;
+    }
+    .api-key-trigger:hover { color: var(--ink-soft); }
+    .api-key-row {
+      display: none; align-items: center; gap: 8px; margin-top: 10px;
+    }
+    .api-key-row.show { display: flex; }
+    .api-key-input {
+      flex: 1; padding: 8px 14px; font-size: 0.82rem;
+      border: 1px solid #DBCDC6; border-radius: var(--radius-cap);
+      background: var(--card-cream); color: var(--ink);
+      outline: none; letter-spacing: 0.03em;
+      font-family: monospace;
+    }
+    .api-key-input:focus { border-color: var(--terracotta); }
+    .api-key-save {
+      font-size: 0.80rem; padding: 8px 18px;
+      background: var(--sage); color: #FEFAF7; border: none;
+      border-radius: var(--radius-cap); cursor: pointer;
+      letter-spacing: 0.03em; white-space: nowrap;
+      transition: background 0.2s var(--ease-smooth);
+    }
+    .api-key-save:hover { background: #7d966b; }
+    .api-key-status { font-size: 0.75rem; color: var(--sage); display: none; }
+    .api-key-status.show { display: inline; }
+
+    /* ===== Results Section ===== */
+    .results-section { width: 100%; }
+    .result-card {
+      background: var(--card-cream); border-radius: var(--radius-lg);
+      padding: 24px 26px; box-shadow: var(--shadow-card);
+      border: 1px solid #EDE0DC;
+    }
+    .result-card__header { display: flex; align-items: center; margin-bottom: 18px; }
+
+    .pill-tag {
+      display: inline-block; font-size: 0.80rem; font-weight: 500;
+      letter-spacing: 0.04em; padding: 6px 16px;
+      border-radius: var(--radius-cap); color: #FEFAF7; line-height: 1.3;
+    }
+    .pill-tag--rose       { background: var(--rose); }
+    .pill-tag--sage       { background: var(--sage); }
+    .pill-tag--terracotta { background: var(--terracotta); }
+
+    .result-placeholder {
+      width: 100%; aspect-ratio: 4 / 3;
+      border: 1.5px dashed #DBCDC6; border-radius: var(--radius-md);
+      background: #F9F3F0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .result-placeholder span { font-size: 0.84rem; color: var(--ink-muted); letter-spacing: 0.03em; }
+
+    /* Suggestion results (dynamic content) */
+    .suggest-content { display: none; }
+    .suggest-content.show { display: block; }
+    .suggest-empty { display: block; }
+    .suggest-empty.hide { display: none; }
+
+    .suggest-tags {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px;
+    }
+    .suggest-tag {
+      font-size: 0.80rem; font-weight: 500; letter-spacing: 0.04em;
+      padding: 6px 16px; border-radius: var(--radius-cap);
+      color: #FEFAF7; line-height: 1.3;
+    }
+    .suggest-tag--1 { background: var(--rose); }
+    .suggest-tag--2 { background: var(--sage); }
+    .suggest-tag--3 { background: var(--terracotta); }
+
+    .suggest-color-note {
+      font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px;
+      line-height: 1.6; letter-spacing: 0.03em;
+    }
+
+    .suggest-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .suggest-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 0.86rem; color: var(--ink); line-height: 1.6;
+      letter-spacing: 0.03em;
+    }
+    .suggest-item__icon {
+      flex-shrink: 0; width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    .suggest-item__text strong {
+      color: var(--terracotta); font-weight: 500;
+    }
+    .suggest-error {
+      display: none; font-size: 0.84rem; color: #C5755F;
+      text-align: center; padding: 20px 0; letter-spacing: 0.03em;
+    }
+    .suggest-error.show { display: block; }
+
+    /* ===== Blogger Section ===== */
+    .blogger-section { width: 100%; }
+    .blogger-card {
+      background: var(--card-cream); border-radius: var(--radius-lg);
+      padding: 20px 24px; box-shadow: var(--shadow-card);
+      border: 1px solid #EDE0DC;
+    }
+    .blogger-card__title { font-size: 0.90rem; font-weight: 500; color: var(--ink-soft); margin-bottom: 14px; letter-spacing: 0.04em; }
+    .optional-badge {
+      display: inline-block; font-size: 0.73rem; color: var(--ink-muted);
+      background: #F8E2E6; padding: 3px 12px; border-radius: var(--radius-cap);
+      margin-left: 6px; font-weight: 400; letter-spacing: 0.03em;
+    }
+    .blogger-upload-area {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      min-height: 70px; border: 1.5px dashed #C8B8B4;
+      border-radius: var(--radius-md); background: #FDF6F7;
+      cursor: pointer;
+      transition: border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth);
+    }
+    .blogger-upload-area:hover { border-color: var(--sage); background: #F6F9F2; }
+    .blogger-upload-area svg { width: 20px; height: 20px; color: var(--sage); flex-shrink: 0; }
+    .blogger-upload-area span { font-size: 0.87rem; color: var(--ink-soft); letter-spacing: 0.03em; }
+
+    .blogger-thumbnails { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .blogger-thumb {
+      position: relative; width: 74px; height: 74px;
+      border-radius: var(--radius-sm); overflow: hidden;
+      border: 2px solid #EDE0DC;
+    }
+    .blogger-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .blogger-thumb__remove {
+      position: absolute; top: 3px; right: 3px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(61,44,40,0.72); color: #fff; border: none;
+      cursor: pointer; font-size: 13px; line-height: 1;
+      display: flex; align-items: center; justify-content: center; padding: 0;
+    }
+    .blogger-thumb__remove:hover { background: rgba(61,44,40,0.90); }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed; bottom: 48px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--ink); color: #FEFAF7;
+      padding: 14px 30px; border-radius: var(--radius-cap);
+      font-size: 0.94rem; letter-spacing: 0.04em;
+      z-index: 1000; opacity: 0; pointer-events: none;
+      transition: transform 0.38s var(--ease-out), opacity 0.35s var(--ease-smooth);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .footer-deco {
+      font-size: 0.80rem; color: var(--ink-muted);
+      text-align: center; padding-bottom: 8px; letter-spacing: 0.04em;
+    }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; margin: -1px;
+      padding: 0; overflow: hidden; clip: rect(0,0,0,0); border: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- ==================== INTRO ANIMATION ==================== -->
+  <div class="intro-overlay" id="introOverlay">
+    <!-- Petals container — populated by JavaScript -->
+    <div class="petals-container" id="petalsContainer"></div>
+
+    <!-- Floating title card — double-border structure -->
+    <div class="intro-card">
+      <div class="intro-card__inner">
+        <div class="intro-title">What is Missing?</div>
+        <div class="intro-divider">
+          <span class="intro-divider__line"></span>
+          <!-- Five-petal flower -->
+          <svg class="intro-divider__flower" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#C9A89A">
+              <ellipse cx="8" cy="3.5" rx="2.2" ry="3.8" transform="rotate(0 8 8)"/>
+              <ellipse cx="8" cy="3.5" rx="2.2" ry="3.8" transform="rotate(72 8 8)"/>
+              <ellipse cx="8" cy="3.5" rx="2.2" ry="3.8" transform="rotate(144 8 8)"/>
+              <ellipse cx="8" cy="3.5" rx="2.2" ry="3.8" transform="rotate(216 8 8)"/>
+              <ellipse cx="8" cy="3.5" rx="2.2" ry="3.8" transform="rotate(288 8 8)"/>
+            </g>
+            <circle cx="8" cy="8" r="2.2" fill="#F9E3DD"/>
+          </svg>
+          <span class="intro-divider__line"></span>
+        </div>
+        <button class="intro-enter" id="introEnter">Enter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE CONTENT ==================== -->
+  <main class="page">
+
+    <header class="header">
+      <h1 class="header__title">
+        What is Missing<span class="header__handwritten">find your perfect piece</span>
+      </h1>
+      <p class="header__slogan">今天，还缺一件什么？</p>
+    </header>
+
+    <section class="upload-wrapper" aria-label="上传穿搭照片">
+      <div class="upload-zone" id="outfitUploadZone">
+        <div class="upload-placeholder">
+          <div class="upload-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <span class="upload-label">上传今日穿搭照片</span>
+          <span class="upload-hint">点击选择图片，或拖拽图片到这里</span>
+        </div>
+        <div class="upload-preview">
+          <img id="outfitPreviewImg" src="" alt="穿搭预览">
+          <button class="upload-remove" id="outfitRemoveBtn" aria-label="移除照片">&times;</button>
+        </div>
+        <input type="file" accept="image/*" id="outfitFileInput" class="visually-hidden">
+      </div>
+    </section>
+
+    <button class="btn-suggest" id="btnSuggest">
+      <div class="btn-spinner"></div>
+      <svg class="btn-star-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l1.5 5.5L19 9l-5.5 2L12 16.5 10.5 11 5 9l5.5-2z"/>
+        <path d="M7 15l-1 4 4-1"/>
+      </svg>
+      <span class="btn-label">获取建议</span>
+    </button>
+
+    <section class="results-section">
+      <article class="result-card" id="suggestCard">
+        <div class="result-card__header"><span class="pill-tag pill-tag--rose">建议</span></div>
+        <div class="suggest-empty" id="suggestEmpty">
+          <div class="result-placeholder"><span>穿搭完成后在这里查看建议</span></div>
+        </div>
+        <div class="suggest-content" id="suggestContent">
+          <div class="suggest-tags" id="suggestTags"></div>
+          <div class="suggest-color-note" id="suggestColorNote"></div>
+          <ul class="suggest-list" id="suggestList"></ul>
+        </div>
+        <div class="suggest-error" id="suggestError">分析失败，请重试</div>
+      </article>
+    </section>
+
+    <section class="blogger-section">
+      <div class="blogger-card">
+        <div class="blogger-card__title">想参考的穿搭风格<span class="optional-badge">选填，可上传参考图</span></div>
+        <div class="blogger-upload-area" id="bloggerUploadArea">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span>上传博主穿搭截图（可上传多张）</span>
+        </div>
+        <div class="blogger-thumbnails" id="bloggerThumbnails"></div>
+        <input type="file" accept="image/*" multiple id="bloggerFileInput" class="visually-hidden">
+      </div>
+    </section>
+
+    <footer class="footer-deco">
+      <button class="api-key-trigger" id="apiKeyTrigger">设置 API Key</button>
+      <span class="api-key-status" id="apiKeyStatus">已设置</span>
+      <div class="api-key-row" id="apiKeyRow">
+        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="输入你的 Anthropic API Key (sk-ant-...)">
+        <button class="api-key-save" id="apiKeySave">保存</button>
+      </div>
+      <div style="margin-top:6px;">✿ What is Missing? &mdash; 找到你的每日灵感 ✿</div>
+    </footer>
+
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /* ========== Intro Animation — Petal Falling ========== */
+    (function() {
+      var INTRO_KEY = 'what_is_missing_intro_v10';
+      var overlay = document.getElementById('introOverlay');
+      var enterBtn = document.getElementById('introEnter');
+      var petalsContainer = document.getElementById('petalsContainer');
+
+      // Skip if already seen this session
+      if (sessionStorage.getItem(INTRO_KEY)) {
+        if (overlay) { overlay.classList.add('skip'); }
+        return;
+      }
+
+      // Mark as seen
+      sessionStorage.setItem(INTRO_KEY, '1');
+
+      // --- Generate petals ---
+      var PETAL_COUNT = 20;
+      var COLORS = ['#F4C2C2', '#E8A0B4', '#D4929A', '#FFFCFA', '#FADADD', '#F0CED4', '#F9D5D3', '#EBB5B5'];
+
+      for (var i = 0; i < PETAL_COUNT; i++) {
+        var petal = document.createElement('span');
+        petal.className = 'petal';
+
+        // Random horizontal position (2%–92%)
+        var left = (Math.random() * 90 + 2).toFixed(1);
+        // Random scale (0.6–1.2)
+        var scale = (Math.random() * 0.6 + 0.6).toFixed(2);
+        // Random animation duration (5s–9s)
+        var duration = (Math.random() * 4 + 5).toFixed(1);
+        // Staggered delay (0s–4s) — keep it tight so petals appear quickly
+        var delay = (Math.random() * 4).toFixed(1);
+        // Pick one of 3 sway patterns
+        var sway = Math.floor(Math.random() * 3) + 1;
+        // Random colour
+        var color = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+        petal.style.setProperty('--color', color);
+        petal.style.setProperty('--scale', scale);
+        petal.style.setProperty('--duration', duration + 's');
+        petal.style.setProperty('--delay', delay + 's');
+        petal.style.setProperty('--sway-name', 'petalFall' + sway);
+        petal.style.left = left + '%';
+
+        petalsContainer.appendChild(petal);
+      }
+
+      // ENTER button → fade out intro
+      if (enterBtn) {
+        enterBtn.addEventListener('click', function() {
+          overlay.classList.add('fadeout');
+        });
+      }
+
+      // Safety: auto-dismiss after 30s (petals loop forever, so give plenty of time)
+      setTimeout(function() {
+        if (overlay && !overlay.classList.contains('fadeout')) {
+          overlay.classList.add('fadeout');
+        }
+      }, 30000);
+    })();
+
+    (function() {
+      /* ========== DOM refs ========== */
+      var outfitUploadZone = document.getElementById('outfitUploadZone');
+      var outfitFileInput = document.getElementById('outfitFileInput');
+      var outfitPreviewImg = document.getElementById('outfitPreviewImg');
+      var outfitRemoveBtn = document.getElementById('outfitRemoveBtn');
+      var btnSuggest = document.getElementById('btnSuggest');
+      var btnLabel = btnSuggest.querySelector('.btn-label');
+      var bloggerUploadArea = document.getElementById('bloggerUploadArea');
+      var bloggerFileInput = document.getElementById('bloggerFileInput');
+      var bloggerThumbnails = document.getElementById('bloggerThumbnails');
+      var toast = document.getElementById('toast');
+      var suggestEmpty = document.getElementById('suggestEmpty');
+      var suggestContent = document.getElementById('suggestContent');
+      var suggestTagsEl = document.getElementById('suggestTags');
+      var suggestColorNote = document.getElementById('suggestColorNote');
+      var suggestList = document.getElementById('suggestList');
+      var suggestError = document.getElementById('suggestError');
+      var apiKeyTrigger = document.getElementById('apiKeyTrigger');
+      var apiKeyRow = document.getElementById('apiKeyRow');
+      var apiKeyInput = document.getElementById('apiKeyInput');
+      var apiKeySave = document.getElementById('apiKeySave');
+      var apiKeyStatus = document.getElementById('apiKeyStatus');
+
+      var toastTimer = null;
+      var currentOutfitDataUrl = null;
+      var isLoading = false;
+
+      /* ========== Toast ========== */
+      function showToast(msg) {
+        if (toastTimer) clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.add('show');
+        toastTimer = setTimeout(function() { toast.classList.remove('show'); toastTimer = null; }, 2400);
+      }
+
+      /* ========== API Key management ========== */
+      var STORAGE_KEY = 'what_is_missing_api_key';
+
+      function getApiKey() {
+        return localStorage.getItem(STORAGE_KEY) || '';
+      }
+
+      function setApiKey(key) {
+        localStorage.setItem(STORAGE_KEY, key.trim());
+      }
+
+      function updateApiKeyUI() {
+        var key = getApiKey();
+        if (key) {
+          apiKeyStatus.classList.add('show');
+          apiKeyTrigger.textContent = '更换 API Key';
+        } else {
+          apiKeyStatus.classList.remove('show');
+          apiKeyTrigger.textContent = '设置 API Key';
+        }
+      }
+
+      apiKeyTrigger.addEventListener('click', function() {
+        apiKeyRow.classList.toggle('show');
+        if (apiKeyRow.classList.contains('show')) {
+          apiKeyInput.value = getApiKey();
+          apiKeyInput.focus();
+        }
+      });
+
+      apiKeySave.addEventListener('click', function() {
+        var val = apiKeyInput.value.trim();
+        if (!val) { showToast('请输入有效的 API Key'); return; }
+        if (!val.startsWith('sk-ant-')) {
+          showToast('API Key 格式看起来不太对，请检查 (应以 sk-ant- 开头)');
+          return;
+        }
+        setApiKey(val);
+        apiKeyRow.classList.remove('show');
+        updateApiKeyUI();
+        showToast('API Key 已保存 ✓');
+      });
+
+      updateApiKeyUI();
+
+      /* ========== Outfit Upload ========== */
+      function loadOutfitImage(file) {
+        if (!file || !file.type.startsWith('image/')) { showToast('请上传图片格式的文件'); return; }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          currentOutfitDataUrl = e.target.result;
+          outfitPreviewImg.src = currentOutfitDataUrl;
+          outfitUploadZone.classList.add('has-image');
+          resetSuggestions();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function removeOutfitImage() {
+        currentOutfitDataUrl = null;
+        outfitPreviewImg.src = '';
+        outfitUploadZone.classList.remove('has-image');
+        outfitFileInput.value = '';
+        resetSuggestions();
+      }
+
+      outfitUploadZone.addEventListener('click', function(e) {
+        if (e.target === outfitRemoveBtn) return;
+        outfitFileInput.click();
+      });
+      outfitFileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) loadOutfitImage(this.files[0]);
+      });
+      outfitRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); removeOutfitImage(); });
+
+      outfitUploadZone.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); this.classList.add('drag-over'); });
+      outfitUploadZone.addEventListener('dragleave', function(e) { e.preventDefault(); e.stopPropagation(); this.classList.remove('drag-over'); });
+      outfitUploadZone.addEventListener('drop', function(e) {
+        e.preventDefault(); e.stopPropagation(); this.classList.remove('drag-over');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) loadOutfitImage(e.dataTransfer.files[0]);
+      });
+
+      /* ========== Reset & UI state helpers ========== */
+      function resetSuggestions() {
+        suggestEmpty.classList.remove('hide');
+        suggestContent.classList.remove('show');
+        suggestError.classList.remove('show');
+        suggestTagsEl.innerHTML = '';
+        suggestColorNote.textContent = '';
+        suggestList.innerHTML = '';
+      }
+
+      function showLoading() {
+        isLoading = true;
+        btnSuggest.classList.add('is-loading');
+        btnLabel.textContent = '分析中...';
+        btnSuggest.disabled = true;
+        suggestError.classList.remove('show');
+      }
+
+      function hideLoading() {
+        isLoading = false;
+        btnSuggest.classList.remove('is-loading');
+        btnLabel.textContent = '获取建议';
+        btnSuggest.disabled = false;
+      }
+
+      /* ========== Claude API call (via local proxy to avoid CORS) ========== */
+      var CLAUDE_API_URL = '/api/analyze';
+      var MODEL = 'claude-sonnet-5';
+
+      var SYSTEM_PROMPT =
+        '你是一位温暖、专业的时尚造型师，你的任务是分析用户的穿搭照片并给出配饰建议。\n' +
+        '如果用户同时提供了参考穿搭风格图片，请先分析这些参考图的风格特点（色彩偏好、单品类型、搭配逻辑），\n' +
+        '然后以这些特点为目标方向，为用户自己的穿搭给出配饰建议，让搭配效果向参考风格靠拢。\n' +
+        '请严格按以下 JSON 格式返回（不要包含任何其他文字，只返回 JSON）：\n' +
+        '{\n' +
+        '  "style": ["风格标签1", "风格标签2"],\n' +
+        '  "colorNote": "色彩搭配的简短评价，1-2句话",\n' +
+        '  "referenceNote": "对参考图风格特点的简短总结（仅在有参考图时填写，无参考图时填空字符串）",\n' +
+        '  "suggestions": [\n' +
+        '    {"item": "配饰名称", "reason": "推荐理由，语气温暖像朋友聊天"},\n' +
+        '    {"item": "配饰名称", "reason": "推荐理由"},\n' +
+        '    {"item": "配饰名称", "reason": "推荐理由"}\n' +
+        '  ]\n' +
+        '}\n' +
+        '要求：\n' +
+        '- style 数组包含 2-3 个风格标签（如：简约通勤风、街头潮酷风、温柔复古风、法式慵懒风等）\n' +
+        '- colorNote 点评当前穿搭的色彩搭配亮点或可优化的地方\n' +
+        '- referenceNote 在提供了参考图时简要总结参考图的风格特点（1-2句话），无参考图时填空字符串\n' +
+        '- suggestions 给出 2-3 条具体的配饰建议，每一条都要有具体的单品名称和推荐理由\n' +
+        '- 建议要具体可执行，不要笼统（例如不要说"加点配饰"，要说"一条银色细锁骨链，可以提亮深色上衣的领口区域"）\n' +
+        '- 语气温暖亲切，像懂时尚的朋友在给你真诚的建议\n' +
+        '- 用中文回复';
+
+      function buildUserPrompt(hasReference) {
+        if (hasReference) {
+          return '请先分析我上传的参考穿搭风格图片，总结它们的风格特点（色彩偏好、单品类型、搭配逻辑），然后分析我自己的穿搭照片，给出能向参考风格靠拢的配饰建议。';
+        }
+        return '请帮我分析这张穿搭照片。告诉我这是什么风格，色彩搭配如何，以及可以增加什么配饰让整体更出彩。';
+      }
+
+      function extractBase64(dataUrl) {
+        var idx = dataUrl.indexOf(';base64,');
+        if (idx === -1) return '';
+        return dataUrl.substring(idx + 8);
+      }
+
+      function extractMediaType(dataUrl) {
+        var idx = dataUrl.indexOf(';base64,');
+        if (idx === -1) return 'image/jpeg';
+        return dataUrl.substring(5, idx);
+      }
+
+      async function callClaudeAPI(dataUrl, referenceImages) {
+        var apiKey = getApiKey();
+        if (!apiKey) {
+          apiKeyRow.classList.add('show');
+          apiKeyInput.focus();
+          throw new Error('NO_API_KEY');
+        }
+
+        var hasReference = referenceImages && referenceImages.length > 0;
+        var userContent = [];
+
+        // Add reference images first (if any)
+        if (hasReference) {
+          for (var i = 0; i < referenceImages.length; i++) {
+            userContent.push({
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: extractMediaType(referenceImages[i]),
+                data: extractBase64(referenceImages[i])
+              }
+            });
+          }
+        }
+
+        // Add user's outfit photo
+        userContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: extractMediaType(dataUrl),
+            data: extractBase64(dataUrl)
+          }
+        });
+
+        // Add text prompt
+        userContent.push({ type: 'text', text: buildUserPrompt(hasReference) });
+
+        var body = {
+          model: MODEL,
+          max_tokens: 1024,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userContent }]
+        };
+
+        var resp = await fetch(CLAUDE_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': apiKey
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (!resp.ok) {
+          var errText = await resp.text().catch(function() { return ''; });
+          if (resp.status === 401) throw new Error('AUTH_ERROR');
+          throw new Error('API_ERROR: ' + resp.status + ' ' + errText.slice(0, 200));
+        }
+
+        var data = await resp.json();
+
+        // Collect text from all text content blocks (skip thinking blocks)
+        var allText = '';
+        (data.content || []).forEach(function(block) {
+          if (block.type === 'text') { allText += block.text; }
+        });
+        if (!allText) {
+          throw new Error('AI 未返回文本内容，请重试');
+        }
+
+        console.log('Claude raw response text:', allText);
+
+        var jsonStr = allText.trim();
+        // Try to extract JSON from markdown code fences
+        var fenceMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+        if (fenceMatch) { jsonStr = fenceMatch[1].trim(); }
+        // Also try to find a JSON object directly
+        var objMatch = jsonStr.match(/\{[\s\S]*\}/);
+        if (objMatch) { jsonStr = objMatch[0]; }
+
+        try {
+          var result = JSON.parse(jsonStr);
+          return result;
+        } catch (parseErr) {
+          console.error('JSON parse failed. Attempted to parse:', jsonStr.slice(0, 500));
+          throw new Error('AI 返回了非 JSON 格式的内容，请重试');
+        }
+      }
+
+      function renderSuggestions(data, hasReference) {
+        suggestEmpty.classList.add('hide');
+        suggestContent.classList.add('show');
+        suggestError.classList.remove('show');
+
+        suggestTagsEl.innerHTML = '';
+        var colors = ['suggest-tag--1', 'suggest-tag--2', 'suggest-tag--3'];
+        (data.style || []).forEach(function(tag, i) {
+          var span = document.createElement('span');
+          span.className = 'suggest-tag ' + (colors[i] || colors[2]);
+          span.textContent = tag;
+          suggestTagsEl.appendChild(span);
+        });
+
+        var noteParts = [];
+        if (data.colorNote) { noteParts.push(data.colorNote); }
+        if (hasReference && data.referenceNote) {
+          noteParts.push('📎 参考风格：' + data.referenceNote);
+        } else if (hasReference) {
+          noteParts.push('📎 已参考你上传的风格图片');
+        }
+        suggestColorNote.textContent = noteParts.join(' | ');
+
+        suggestList.innerHTML = '';
+        var icons = [
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4929A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8FA87C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4876E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+        ];
+        (data.suggestions || []).forEach(function(s, i) {
+          var li = document.createElement('li');
+          li.className = 'suggest-item';
+          li.innerHTML =
+            '<span class="suggest-item__icon">' + (icons[i] || icons[2]) + '</span>' +
+            '<span class="suggest-item__text"><strong>' + escapeHtml(s.item) + '</strong>：' + escapeHtml(s.reason) + '</span>';
+          suggestList.appendChild(li);
+        });
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      /* ========== Suggest button handler ========== */
+      btnSuggest.addEventListener('click', async function() {
+        if (isLoading) return;
+
+        if (!currentOutfitDataUrl) {
+          showToast('请先上传一张穿搭照片 \u{1F4F7}');
+          return;
+        }
+
+        if (!getApiKey()) {
+          apiKeyRow.classList.add('show');
+          apiKeyInput.focus();
+          showToast('请先设置你的 API Key \u{1F511}');
+          return;
+        }
+
+        showLoading();
+
+        try {
+          var refImages = bloggerImages.length > 0 ? bloggerImages : null;
+          var result = await callClaudeAPI(currentOutfitDataUrl, refImages);
+          renderSuggestions(result, !!refImages);
+          document.getElementById('suggestCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (err) {
+          console.error('Analysis error:', err.message || err);
+          hideLoading();
+
+          if (err.message === 'NO_API_KEY') {
+            showToast('请先设置你的 API Key \u{1F511}');
+          } else if (err.message === 'AUTH_ERROR') {
+            suggestEmpty.classList.add('hide');
+            suggestContent.classList.remove('show');
+            suggestError.classList.add('show');
+            suggestError.textContent = 'API Key 无效，请在下方重新设置';
+            showToast('API Key 验证失败，请检查后重试');
+          } else if (err.message && err.message.startsWith('API_ERROR:')) {
+            suggestEmpty.classList.add('hide');
+            suggestContent.classList.remove('show');
+            suggestError.classList.add('show');
+            suggestError.textContent = 'API 错误：' + err.message.replace('API_ERROR: ', '');
+            showToast('API 调用失败，请查看下方详情');
+          } else if (err instanceof SyntaxError) {
+            suggestEmpty.classList.add('hide');
+            suggestContent.classList.remove('show');
+            suggestError.classList.add('show');
+            suggestError.textContent = 'AI 返回格式异常，请重试';
+            showToast('AI 返回格式异常，请重试');
+          } else {
+            suggestEmpty.classList.add('hide');
+            suggestContent.classList.remove('show');
+            suggestError.classList.add('show');
+            suggestError.textContent = '分析失败：' + (err.message || '网络错误，请检查是否通过 localhost 访问');
+            showToast('分析失败，请查看下方详情');
+          }
+          return;
+        }
+
+        hideLoading();
+      });
+
+      /* ========== Reference Style Upload ========== */
+      var bloggerImages = [];
+      var MAX_REF_IMAGES = 3;
+      function addBloggerImage(file) {
+        if (!file || !file.type.startsWith('image/')) { showToast('请上传图片格式的文件'); return; }
+        if (bloggerImages.length >= MAX_REF_IMAGES) {
+          showToast('最多上传 ' + MAX_REF_IMAGES + ' 张参考图片');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) { bloggerImages.push(e.target.result); renderBloggerThumbnails(); };
+        reader.readAsDataURL(file);
+      }
+      function removeBloggerImage(i) { bloggerImages.splice(i, 1); renderBloggerThumbnails(); bloggerFileInput.value = ''; }
+      function renderBloggerThumbnails() {
+        bloggerThumbnails.innerHTML = '';
+        bloggerImages.forEach(function(url, i) {
+          var thumb = document.createElement('div'); thumb.className = 'blogger-thumb';
+          var img = document.createElement('img'); img.src = url; img.alt = '博主穿搭截图 ' + (i + 1);
+          thumb.appendChild(img);
+          var btn = document.createElement('button'); btn.className = 'blogger-thumb__remove';
+          btn.setAttribute('aria-label', '移除截图'); btn.textContent = '×';
+          btn.addEventListener('click', function(e) { e.stopPropagation(); removeBloggerImage(i); });
+          thumb.appendChild(btn);
+          bloggerThumbnails.appendChild(thumb);
+        });
+      }
+
+      bloggerUploadArea.addEventListener('click', function() { bloggerFileInput.click(); });
+      bloggerFileInput.addEventListener('change', function() {
+        var files = this.files;
+        if (files) {
+          var remaining = MAX_REF_IMAGES - bloggerImages.length;
+          if (files.length > remaining) {
+            showToast('最多上传 ' + MAX_REF_IMAGES + ' 张参考图片（当前已有 ' + bloggerImages.length + ' 张，还能加 ' + remaining + ' 张）');
+          }
+          for (var i = 0; i < files.length && i < remaining; i++) addBloggerImage(files[i]);
+          this.value = '';
+        }
+      });
+      bloggerUploadArea.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); });
+      bloggerUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        var files = e.dataTransfer.files; if (files) for (var i = 0; i < files.length; i++) addBloggerImage(files[i]);
+      });
+
+      outfitUploadZone.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); outfitFileInput.click(); }
+      });
+    })();
+  </script>
+</body>
+</html>

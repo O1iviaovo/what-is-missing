@@ -1,0 +1,18 @@
+# Server / dev files (not needed in production)
+server.ps1
+start.bat
+server-errors.log
+
+# Documentation
+what is missing.docx
+
+# Unused video assets (old intro animation — removed)
+plant1.mp4
+plant2.mp4
+plant3.mp4
+plant-top-left.mp4
+plant-top-right.mp4
+plant-bottom-left.mp4
+
+# Vercel
+.vercel
