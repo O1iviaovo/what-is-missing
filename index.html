@@ -907,12 +907,25 @@
         console.log('Claude raw response text:', allText);
 
         var jsonStr = allText.trim();
-        // Try to extract JSON from markdown code fences
+
+        // 1) Strip markdown code fences if present
         var fenceMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
         if (fenceMatch) { jsonStr = fenceMatch[1].trim(); }
-        // Also try to find a JSON object directly
-        var objMatch = jsonStr.match(/\{[\s\S]*\}/);
-        if (objMatch) { jsonStr = objMatch[0]; }
+
+        // 2) Find the outermost { … } block (handles nested braces correctly)
+        var braceStart = jsonStr.indexOf('{');
+        if (braceStart !== -1) {
+          var depth = 0;
+          var braceEnd = -1;
+          for (var i = braceStart; i < jsonStr.length; i++) {
+            if (jsonStr[i] === '{') depth++;
+            if (jsonStr[i] === '}') depth--;
+            if (depth === 0) { braceEnd = i; break; }
+          }
+          if (braceEnd !== -1) {
+            jsonStr = jsonStr.substring(braceStart, braceEnd + 1);
+          }
+        }
 
         try {
           var result = JSON.parse(jsonStr);
