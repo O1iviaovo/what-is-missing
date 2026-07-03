@@ -873,7 +873,7 @@
 
         var body = {
           model: MODEL,
-          max_tokens: 1024,
+          max_tokens: 2048,  // two-image analysis needs more headroom
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userContent }],
           thinking: { type: 'disabled' }   // Sonnet 5 may enable thinking by default
@@ -943,7 +943,7 @@
           return result;
         } catch (parseErr) {
           console.error('JSON parse failed. Attempted to parse:', jsonStr.slice(0, 500));
-          throw new Error('AI 返回了非 JSON 格式的内容，请重试');
+          throw new Error('AI 返回了非 JSON 格式，请重试（返回片段: ' + jsonStr.slice(0, 120) + '…）');
         }
       }
 
