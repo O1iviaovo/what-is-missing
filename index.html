@@ -875,7 +875,8 @@
           model: MODEL,
           max_tokens: 1024,
           system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: userContent }]
+          messages: [{ role: 'user', content: userContent }],
+          thinking: { type: 'disabled' }   // Sonnet 5 may enable thinking by default
         };
 
         var resp = await fetch(CLAUDE_API_URL, {
@@ -895,10 +896,11 @@
 
         var data = await resp.json();
 
-        // Collect text from all text content blocks (skip thinking blocks)
+        // Collect text from all content blocks
         var allText = '';
         (data.content || []).forEach(function(block) {
-          if (block.type === 'text') { allText += block.text; }
+          if (block.type === 'text')    { allText += block.text; }
+          if (block.type === 'thinking') { allText += block.thinking || ''; }
         });
         if (!allText) {
           throw new Error('AI 未返回文本内容，请重试');
