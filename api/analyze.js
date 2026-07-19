@@ -25,8 +25,8 @@ function readRawBody(req) {
   });
 }
 
-// Server-side API key — set in Vercel dashboard → Settings → Environment Variables
-var ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+// Server-side API key — hardcoded for public access
+var ANTHROPIC_API_KEY = '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';
 
 export default async function handler(req, res) {
   // --- CORS ---
