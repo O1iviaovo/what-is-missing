@@ -1,9 +1,9 @@
 /**
  * Vercel serverless function — Anthropic API proxy
  *
- * POST /api/analyze  →  forwards raw request/response to Anthropic Messages API.
- * Disables the built-in body parser so we can handle the body ourselves
- * (important for large base64-image payloads).
+ * POST /api/analyze  →  forwards to Anthropic Messages API.
+ * The API key is stored as a Vercel environment variable (ANTHROPIC_API_KEY)
+ * so end-users do NOT need to bring their own key.
  */
 
 export const config = {
@@ -25,10 +25,13 @@ function readRawBody(req) {
   });
 }
 
+// Server-side API key — set in Vercel dashboard → Settings → Environment Variables
+var ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
 export default async function handler(req, res) {
   // --- CORS ---
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Api-Key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -38,10 +41,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // --- Validate API key ---
-  var apiKey = req.headers['x-api-key'];
-  if (!apiKey) {
-    return res.status(400).json({ error: 'Missing X-Api-Key header' });
+  // --- Check server-side key ---
+  if (!ANTHROPIC_API_KEY) {
+    console.error('[analyze] ANTHROPIC_API_KEY environment variable is not set');
+    return res.status(500).json({ error: 'Server not configured — missing API key' });
   }
 
   // --- Forward to Anthropic ---
@@ -53,7 +56,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type':       'application/json',
-        'x-api-key':           apiKey,
+        'x-api-key':           ANTHROPIC_API_KEY,
         'anthropic-version':   '2023-06-01'
       },
       body: rawBody
@@ -62,7 +65,6 @@ export default async function handler(req, res) {
     var upstreamText = await upstream.text();
     console.log('[analyze] upstream status:', upstream.status, '| response length:', upstreamText.length);
 
-    // Log the content types in the response for debugging
     try {
       var parsed = JSON.parse(upstreamText);
       if (parsed.content) {
@@ -72,7 +74,7 @@ export default async function handler(req, res) {
       if (parsed.error) {
         console.log('[analyze] upstream error:', JSON.stringify(parsed.error));
       }
-    } catch (_) { /* not JSON — just forward as-is */ }
+    } catch (_) { /* not JSON */ }
 
     res.status(upstream.status)
        .setHeader('Content-Type', 'application/json; charset=utf-8')

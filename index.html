@@ -304,36 +304,6 @@
     .btn-suggest.is-loading .btn-star-icon { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ===== API Key Settings ===== */
-    .api-key-trigger {
-      font-size: 0.78rem; color: var(--ink-muted); cursor: pointer;
-      background: none; border: none; text-decoration: underline;
-      text-underline-offset: 3px; letter-spacing: 0.03em;
-    }
-    .api-key-trigger:hover { color: var(--ink-soft); }
-    .api-key-row {
-      display: none; align-items: center; gap: 8px; margin-top: 10px;
-    }
-    .api-key-row.show { display: flex; }
-    .api-key-input {
-      flex: 1; padding: 8px 14px; font-size: 0.82rem;
-      border: 1px solid #DBCDC6; border-radius: var(--radius-cap);
-      background: var(--card-cream); color: var(--ink);
-      outline: none; letter-spacing: 0.03em;
-      font-family: monospace;
-    }
-    .api-key-input:focus { border-color: var(--terracotta); }
-    .api-key-save {
-      font-size: 0.80rem; padding: 8px 18px;
-      background: var(--sage); color: #FEFAF7; border: none;
-      border-radius: var(--radius-cap); cursor: pointer;
-      letter-spacing: 0.03em; white-space: nowrap;
-      transition: background 0.2s var(--ease-smooth);
-    }
-    .api-key-save:hover { background: #7d966b; }
-    .api-key-status { font-size: 0.75rem; color: var(--sage); display: none; }
-    .api-key-status.show { display: inline; }
-
     /* ===== Results Section ===== */
     .results-section { width: 100%; }
     .result-card {
@@ -567,12 +537,6 @@
     </section>
 
     <footer class="footer-deco">
-      <button class="api-key-trigger" id="apiKeyTrigger">设置 API Key</button>
-      <span class="api-key-status" id="apiKeyStatus">已设置</span>
-      <div class="api-key-row" id="apiKeyRow">
-        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="输入你的 Anthropic API Key (sk-ant-...)">
-        <button class="api-key-save" id="apiKeySave">保存</button>
-      </div>
       <div style="margin-top:6px;">✿ What is Missing? &mdash; 找到你的每日灵感 ✿</div>
     </footer>
 
@@ -661,12 +625,6 @@
       var suggestColorNote = document.getElementById('suggestColorNote');
       var suggestList = document.getElementById('suggestList');
       var suggestError = document.getElementById('suggestError');
-      var apiKeyTrigger = document.getElementById('apiKeyTrigger');
-      var apiKeyRow = document.getElementById('apiKeyRow');
-      var apiKeyInput = document.getElementById('apiKeyInput');
-      var apiKeySave = document.getElementById('apiKeySave');
-      var apiKeyStatus = document.getElementById('apiKeyStatus');
-
       var toastTimer = null;
       var currentOutfitDataUrl = null;
       var isLoading = false;
@@ -678,51 +636,6 @@
         toast.classList.add('show');
         toastTimer = setTimeout(function() { toast.classList.remove('show'); toastTimer = null; }, 2400);
       }
-
-      /* ========== API Key management ========== */
-      var STORAGE_KEY = 'what_is_missing_api_key';
-
-      function getApiKey() {
-        return localStorage.getItem(STORAGE_KEY) || '';
-      }
-
-      function setApiKey(key) {
-        localStorage.setItem(STORAGE_KEY, key.trim());
-      }
-
-      function updateApiKeyUI() {
-        var key = getApiKey();
-        if (key) {
-          apiKeyStatus.classList.add('show');
-          apiKeyTrigger.textContent = '更换 API Key';
-        } else {
-          apiKeyStatus.classList.remove('show');
-          apiKeyTrigger.textContent = '设置 API Key';
-        }
-      }
-
-      apiKeyTrigger.addEventListener('click', function() {
-        apiKeyRow.classList.toggle('show');
-        if (apiKeyRow.classList.contains('show')) {
-          apiKeyInput.value = getApiKey();
-          apiKeyInput.focus();
-        }
-      });
-
-      apiKeySave.addEventListener('click', function() {
-        var val = apiKeyInput.value.trim();
-        if (!val) { showToast('请输入有效的 API Key'); return; }
-        if (!val.startsWith('sk-ant-')) {
-          showToast('API Key 格式看起来不太对，请检查 (应以 sk-ant- 开头)');
-          return;
-        }
-        setApiKey(val);
-        apiKeyRow.classList.remove('show');
-        updateApiKeyUI();
-        showToast('API Key 已保存 ✓');
-      });
-
-      updateApiKeyUI();
 
       /* ========== Outfit Upload ========== */
       function loadOutfitImage(file) {
@@ -836,13 +749,6 @@
       }
 
       async function callClaudeAPI(dataUrl, referenceImages) {
-        var apiKey = getApiKey();
-        if (!apiKey) {
-          apiKeyRow.classList.add('show');
-          apiKeyInput.focus();
-          throw new Error('NO_API_KEY');
-        }
-
         var hasReference = referenceImages && referenceImages.length > 0;
         var userContent = [];
 
@@ -884,10 +790,7 @@
 
         var resp = await fetch(CLAUDE_API_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Api-Key': apiKey
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
 
@@ -1024,13 +927,6 @@
           return;
         }
 
-        if (!getApiKey()) {
-          apiKeyRow.classList.add('show');
-          apiKeyInput.focus();
-          showToast('请先设置你的 API Key \u{1F511}');
-          return;
-        }
-
         showLoading();
 
         try {
@@ -1042,14 +938,12 @@
           console.error('Analysis error:', err.message || err);
           hideLoading();
 
-          if (err.message === 'NO_API_KEY') {
-            showToast('请先设置你的 API Key \u{1F511}');
-          } else if (err.message === 'AUTH_ERROR') {
+          if (err.message === 'AUTH_ERROR') {
             suggestEmpty.classList.add('hide');
             suggestContent.classList.remove('show');
             suggestError.classList.add('show');
-            suggestError.textContent = 'API Key 无效，请在下方重新设置';
-            showToast('API Key 验证失败，请检查后重试');
+            suggestError.textContent = '服务认证失败，请联系网站管理员';
+            showToast('服务暂时不可用，请稍后重试');
           } else if (err.message && err.message.startsWith('API_ERROR:')) {
             suggestEmpty.classList.add('hide');
             suggestContent.classList.remove('show');
