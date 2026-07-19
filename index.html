@@ -783,7 +783,7 @@
 
         var body = {
           model: MODEL,
-          max_tokens: 4096,
+          max_tokens: 8192,  // multi-image analysis needs ample headroom
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userContent }]
         };
@@ -806,6 +806,11 @@
         if (data.error) {
           var errMsg = data.error.message || JSON.stringify(data.error);
           throw new Error('API 错误：' + errMsg);
+        }
+
+        // If the model was cut off by token limit, warn specifically
+        if (data.stop_reason === 'max_tokens') {
+          console.warn('Response truncated by max_tokens limit');
         }
 
         // Collect text from all content blocks
